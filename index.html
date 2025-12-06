@@ -87,27 +87,39 @@
   </main>
 
   <script>
-    const gifs = {
-      yes: {
-        src: "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif",
-        alt: "Pouce levé pour un oui franc."
-      },
-      no: {
-        src: "https://media.giphy.com/media/l3vR1MhJ0YqUxzZ8M/giphy.gif",
-        alt: "Hochement de tête pour dire non."
+    async function fetchRandomGif(tag) {
+      const endpoint = `https://api.giphy.com/v1/gifs/random?api_key=0ii51X76Q2wMwn180o9IeM5FovDqDgAs&tag=${encodeURIComponent(tag)}&rating=g`;
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error("Gif fetch failed");
+      const data = await res.json();
+      return data?.data?.images?.downsized_large?.url || data?.data?.images?.downsized?.url;
+    }
+
+    (async () => {
+      const today = new Date();
+      const isJanuary = today.getMonth() === 0;
+      const answerText = isJanuary ? "Oui" : "Non";
+      const query = isJanuary ? "yes" : "no";
+
+      document.querySelector("[data-answer]").textContent = answerText;
+
+      const gifEl = document.querySelector("[data-gif]");
+      try {
+        const url = await fetchRandomGif(query);
+        if (url) {
+          gifEl.src = url;
+          gifEl.alt = `Gif pour ${answerText.toLowerCase()}.`;
+          return;
+        }
+      } catch (err) {
+        console.error(err);
       }
-    };
-
-    const today = new Date();
-    const isJanuary = today.getMonth() === 0;
-    const answerText = isJanuary ? "Oui" : "Non";
-    const choice = isJanuary ? gifs.yes : gifs.no;
-
-    document.querySelector("[data-answer]").textContent = answerText;
-
-    const gifEl = document.querySelector("[data-gif]");
-    gifEl.src = choice.src;
-    gifEl.alt = choice.alt;
+      // Fallback if the API fails.
+      gifEl.src = isJanuary
+        ? "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif"
+        : "https://media3.giphy.com/media/v1.Y2lkPTE4NDZkMDI3dmRheWs1dGE2Nzg1anV2eHMwc2w2MzBkbGlvemk4eTN2eHZvOTIwaSZlcD12MV9naWZzX3JhbmRvbSZjdD1n/l0K3Y1kfhjrfNZuco/giphy.gif";
+      gifEl.alt = "Gif non disponible, utilisation du secours.";
+    })();
   </script>
 </body>
 </html>
